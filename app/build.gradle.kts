@@ -172,7 +172,7 @@ android {
 dependencies {
     debugImplementation(libs.jetbrains.compose.ui.tooling)
 
-    listOf("kspCommonMainMetadata", "kspAndroid", "kspIosArm64", "kspIosSimulatorArm64").forEach {
+    listOf("kspAndroid", "kspIosArm64", "kspIosSimulatorArm64").forEach {
         add(it, libs.androidx.room.compiler)
     }
 }

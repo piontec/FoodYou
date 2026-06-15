@@ -59,7 +59,7 @@ abstract class MealDao {
         }
     }
 
-    @Insert protected abstract fun insertMeal(meal: MealEntity)
+    @Insert protected abstract suspend fun insertMeal(meal: MealEntity)
 
     @Query(
         """
