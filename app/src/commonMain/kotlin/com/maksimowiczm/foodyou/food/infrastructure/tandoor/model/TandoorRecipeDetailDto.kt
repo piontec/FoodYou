@@ -61,7 +61,7 @@ internal data class TandoorFoodDto(
 
 @Serializable
 internal data class TandoorFoodPropertyDto(
-    @SerialName("property") val propertyType: TandoorPropertyTypeDto? = null,
+    @SerialName("property_type") val propertyType: TandoorPropertyTypeDto? = null,
     @SerialName("property_amount") val propertyAmount: Double = 0.0,
 )
 

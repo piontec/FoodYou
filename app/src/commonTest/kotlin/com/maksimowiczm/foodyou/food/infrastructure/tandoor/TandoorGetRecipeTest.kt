@@ -102,7 +102,7 @@ class TandoorGetRecipeTest {
                                         "name": "Orzo pasta",
                                         "properties": [
                                             {
-                                                "property": {
+                                                "property_type": {
                                                     "id": 1,
                                                     "name": "Calories",
                                                     "unit": "kcal",
