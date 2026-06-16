@@ -164,7 +164,7 @@ fun FoodYouAppNavHost(onDatabaseBackup: () -> Unit, modifier: Modifier = Modifie
             TandoorImportScreen(
                 recipeId = recipeId,
                 onBack = { navController.popBackStackInclusive<TandoorImport>() },
-                onImported = {},
+                onImported = { navController.popBackStackInclusive<TandoorImport>() },
             )
         }
         forwardBackwardComposable<ImportCsvProducts> {

@@ -50,19 +50,12 @@ internal class TandoorRemoteDataSource(
 
     suspend fun getRecipe(id: Int): Result<TandoorRecipeDetailDto> =
         try {
-            val url = "$serverUrl/api/recipe/$id/"
-            println("[TANDOOR-DBG] getRecipe url=$url")
-            val response = client.get(url) {
+            val response = client.get("$serverUrl/api/recipe/$id/") {
                 header(HttpHeaders.Authorization, "Bearer $apiToken")
             }
-            println("[TANDOOR-DBG] getRecipe status=${response.status}")
 
             when (response.status) {
-                HttpStatusCode.OK -> {
-                    val dto = response.body<TandoorRecipeDetailDto>()
-                    println("[TANDOOR-DBG] getRecipe parsed ok, steps=${dto.steps.size}")
-                    Result.success(dto)
-                }
+                HttpStatusCode.OK -> Result.success(response.body<TandoorRecipeDetailDto>())
                 HttpStatusCode.Forbidden -> Result.failure(TandoorConnectionError.AuthError())
                 else -> Result.failure(
                     TandoorConnectionError.ReachabilityError(
@@ -73,17 +66,14 @@ internal class TandoorRemoteDataSource(
         } catch (e: CancellationException) {
             throw e
         } catch (e: JsonConvertException) {
-            println("[TANDOOR-DBG] getRecipe JsonConvertException: ${e.message}")
             Result.failure(
                 TandoorConnectionError.ReachabilityError("Recipe response schema mismatch: ${e.message}"),
             )
         } catch (e: SerializationException) {
-            println("[TANDOOR-DBG] getRecipe SerializationException: ${e.message}")
             Result.failure(
                 TandoorConnectionError.ReachabilityError("Recipe response schema mismatch: ${e.message}"),
             )
         } catch (e: Exception) {
-            println("[TANDOOR-DBG] getRecipe Exception ${e::class.simpleName}: ${e.message}")
             Result.failure(TandoorConnectionError.ReachabilityError(e.message))
         }
 
