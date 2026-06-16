@@ -282,6 +282,17 @@
     <string name="description_swiss_food_composition_database_short">Swiss Food Composition Database includes nutritional information for over 1,100 general food products</string>
     <string name="description2_swiss_food_composition_database">Swiss Food Composition Database includes nutritional information for over 1,100 general food products. It is available in four languages. To import these products into your food diary, please select your preferred languages.</string>
 
+    <string name="headline_tandoor" translatable="false">Tandoor</string>
+    <string name="description_tandoor_short">Import recipes from your self-hosted Tandoor instance</string>
+    <string name="headline_tandoor_server_url">Tandoor Server URL</string>
+    <string name="headline_tandoor_api_token">API Token</string>
+    <string name="action_tandoor_test_connection">Test connection</string>
+    <string name="action_tandoor_disconnect">Disconnect</string>
+    <string name="description_tandoor_token_hint">Generate a token in Tandoor → Settings → API tokens (tda_…)</string>
+    <string name="info_tandoor_connection_success">Connection successful</string>
+    <string name="error_tandoor_auth">Invalid API token (HTTP 403). Check your token in Tandoor → Settings → API tokens.</string>
+    <string name="error_tandoor_reachability">Cannot reach Tandoor server. Check the URL and your network.</string>
+
     <string name="headline_external_databases">External databases</string>
     <string name="description_external_databases">Check out supported databases</string>
 

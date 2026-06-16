@@ -14,6 +14,7 @@ import com.maksimowiczm.foodyou.app.ui.database.externaldatabases.UpdateUsdaApiK
 import com.maksimowiczm.foodyou.app.ui.database.importcsvproducts.ImportCsvProductsScreen
 import com.maksimowiczm.foodyou.app.ui.database.master.DatabaseSettingsScreen
 import com.maksimowiczm.foodyou.app.ui.database.swissfoodcompositiondatabase.SwissFoodCompositionDatabaseScreen
+import com.maksimowiczm.foodyou.app.ui.database.tandoor.TandoorConnectionScreen
 import com.maksimowiczm.foodyou.app.ui.food.diary.add.AddEntryScreen
 import com.maksimowiczm.foodyou.app.ui.food.diary.quickadd.CreateQuickAddScreen
 import com.maksimowiczm.foodyou.app.ui.food.diary.quickadd.UpdateQuickAddScreen
@@ -135,11 +136,17 @@ fun FoodYouAppNavHost(onDatabaseBackup: () -> Unit, modifier: Modifier = Modifie
                 onSwissFoodCompositionDatabase = {
                     navController.navigateSingleTop(SwissFoodCompositionDatabase)
                 },
+                onTandoor = { navController.navigateSingleTop(TandoorConnection) },
             )
         }
         forwardBackwardComposable<SwissFoodCompositionDatabase> {
             SwissFoodCompositionDatabaseScreen(
                 onBack = { navController.popBackStackInclusive<SwissFoodCompositionDatabase>() }
+            )
+        }
+        forwardBackwardComposable<TandoorConnection> {
+            TandoorConnectionScreen(
+                onBack = { navController.popBackStackInclusive<TandoorConnection>() }
             )
         }
         forwardBackwardComposable<ImportCsvProducts> {
@@ -405,6 +412,7 @@ fun FoodYouAppNavHost(onDatabaseBackup: () -> Unit, modifier: Modifier = Modifie
 @Serializable private object ExternalDatabases
 
 @Serializable private object SwissFoodCompositionDatabase
+@Serializable private object TandoorConnection
 
 @Serializable private object UsdaApiKey
 
