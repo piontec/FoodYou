@@ -6,6 +6,7 @@ import com.maksimowiczm.foodyou.food.domain.usecase.CreateProductUseCase
 import com.maksimowiczm.foodyou.food.domain.usecase.CreateRecipeUseCase
 import com.maksimowiczm.foodyou.food.domain.usecase.DeleteFoodUseCase
 import com.maksimowiczm.foodyou.food.domain.usecase.DownloadProductUseCase
+import com.maksimowiczm.foodyou.food.domain.usecase.AutoLinkTandoorIngredientsUseCase
 import com.maksimowiczm.foodyou.food.domain.usecase.ImportTandoorRecipeUseCase
 import com.maksimowiczm.foodyou.food.domain.usecase.ObserveFoodUseCase
 import com.maksimowiczm.foodyou.food.domain.usecase.ObserveMeasurementSuggestionsUseCase
@@ -19,6 +20,7 @@ fun Module.foodDomainModule() {
     factoryOf(::CreateRecipeUseCase)
     factoryOf(::DeleteFoodUseCase)
     factoryOf(::DownloadProductUseCase)
+    factoryOf(::AutoLinkTandoorIngredientsUseCase)
     factoryOf(::ImportTandoorRecipeUseCase)
     factoryOf(::ObserveFoodUseCase)
     factoryOf(::ObserveMeasurementSuggestionsUseCase)

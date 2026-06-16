@@ -420,7 +420,7 @@ private fun ResolvedIngredientResolutionItem(
                 Icon(
                     imageVector = Icons.Outlined.CheckCircle,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = resolution.tint(),
                 )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
@@ -434,7 +434,15 @@ private fun ResolvedIngredientResolutionItem(
                     )
                 }
                 TextButton(onClick = { onUnresolve(index) }) {
-                    Text(stringResource(Res.string.action_reset))
+                    Text(
+                        stringResource(
+                            if (resolution is TandoorIngredientResolution.AutoLinkedToFood) {
+                                Res.string.action_tandoor_override
+                            } else {
+                                Res.string.action_reset
+                            },
+                        ),
+                    )
                 }
             }
         }
@@ -582,6 +590,7 @@ private val TandoorIngredientResolution.ingredient
             is TandoorIngredientResolution.CanAutoResolve -> ingredient
             is TandoorIngredientResolution.ManuallyWeighed -> ingredient
             is TandoorIngredientResolution.LinkedToFood -> ingredient
+            is TandoorIngredientResolution.AutoLinkedToFood -> ingredient
             is TandoorIngredientResolution.EmptyProduct -> ingredient
             is TandoorIngredientResolution.Unresolved -> ingredient
         }
@@ -604,6 +613,11 @@ private fun TandoorIngredientResolution.summary(): String =
                 " • " +
                 measurement.measurementStringResource()
 
+        is TandoorIngredientResolution.AutoLinkedToFood ->
+            stringResource(Res.string.label_tandoor_resolved_auto_linked, foodName) +
+                " • " +
+                measurement.measurementStringResource()
+
         is TandoorIngredientResolution.EmptyProduct ->
             stringResource(Res.string.label_tandoor_resolved_empty) +
                 " • " +
@@ -617,4 +631,12 @@ private fun TandoorIngredientResolution.UnresolvedReason.toResource() =
     when (this) {
         TandoorIngredientResolution.UnresolvedReason.NO_AMOUNT -> Res.string.label_tandoor_no_amount
         TandoorIngredientResolution.UnresolvedReason.NO_MEASUREMENT -> Res.string.label_tandoor_no_conversion
+    }
+
+@Composable
+private fun TandoorIngredientResolution.tint() =
+    if (this is TandoorIngredientResolution.AutoLinkedToFood) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.primary
     }

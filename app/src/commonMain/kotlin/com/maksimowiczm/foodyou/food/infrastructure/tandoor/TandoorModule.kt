@@ -26,4 +26,5 @@ internal fun Module.tandoorModule() {
         .onClose { it?.close() }
 
     factoryOf(::TandoorCredentialsRepositoryImpl).bind<TandoorCredentialsRepository>()
+    factoryOf(::ProductRepositoryTandoorFoodMatcher).bind<TandoorFoodMatchRepository>()
 }

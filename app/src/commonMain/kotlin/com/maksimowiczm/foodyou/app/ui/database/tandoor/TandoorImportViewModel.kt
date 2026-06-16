@@ -8,6 +8,7 @@ import com.maksimowiczm.foodyou.food.domain.entity.Product
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientDraft
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeDraft
 import com.maksimowiczm.foodyou.food.domain.repository.ProductRepository
+import com.maksimowiczm.foodyou.food.domain.usecase.AutoLinkTandoorIngredientsUseCase
 import com.maksimowiczm.foodyou.food.domain.repository.TandoorCredentialsRepository
 import com.maksimowiczm.foodyou.food.domain.usecase.ImportTandoorRecipeError
 import com.maksimowiczm.foodyou.food.domain.usecase.ImportTandoorRecipeUseCase
@@ -66,6 +67,7 @@ internal class TandoorImportViewModel(
     private val credentialsRepository: TandoorCredentialsRepository,
     private val client: HttpClient,
     private val importTandoorRecipeUseCase: ImportTandoorRecipeUseCase,
+    private val autoLinkTandoorIngredientsUseCase: AutoLinkTandoorIngredientsUseCase,
     private val productRepository: ProductRepository,
     private val externalScope: CoroutineScope? = null,
 ) : ViewModel() {
@@ -104,7 +106,10 @@ internal class TandoorImportViewModel(
                         val draft = TandoorRecipeMapper.map(result.getOrThrow())
                         TandoorImportState.Ready(
                             draft = draft,
-                            resolutions = draft.ingredients.map(::autoResolve),
+                            resolutions =
+                                autoLinkTandoorIngredientsUseCase.autoLink(
+                                    draft.ingredients.map(::autoResolve),
+                                ),
                         )
                     }
 

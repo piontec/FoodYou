@@ -236,6 +236,39 @@ class ImportTandoorRecipeUseCaseTest {
     }
 
     @Test
+    fun autoLinkedToFoodUsesExistingFoodIdWithoutCreatingProduct() = kotlinx.coroutines.runBlocking {
+        val (useCase, productRepository, recipeRepository) = buildFixture()
+        val ingredient = unresolvedIngredientDraft(foodName = "Garlic")
+        val existingFoodId =
+            productRepository.seedProduct(
+                name = "Garlic",
+                nutritionFacts = NutritionFacts.Empty,
+            )
+        val measurement = Measurement.Gram(100.0)
+
+        val result =
+            useCase.import(
+                draft = fullyResolvableDraft().copy(ingredients = listOf(ingredient)),
+                resolutions =
+                    listOf(
+                        TandoorIngredientResolution.AutoLinkedToFood(
+                            ingredient = ingredient,
+                            foodId = existingFoodId,
+                            measurement = measurement,
+                            foodName = "Garlic",
+                        ),
+                    ),
+            )
+
+        val success = assertIs<Result.Success<FoodId.Recipe, ImportTandoorRecipeError>>(result)
+        assertEquals(FoodId.Recipe(1L), success.data)
+        assertEquals(0, productRepository.insertedProducts.size)
+        val recipeIngredient = recipeRepository.insertedRecipes.single().ingredients.single()
+        assertEquals(existingFoodId, recipeIngredient.food.id)
+        assertEquals(measurement, recipeIngredient.measurement)
+    }
+
+    @Test
     fun emptyProductResolutionCreatesZeroNutritionProduct() = kotlinx.coroutines.runBlocking {
         val (useCase, productRepository, recipeRepository) = buildFixture()
         val ingredient = unresolvedIngredientDraft(foodName = "Mystery spice")

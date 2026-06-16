@@ -21,6 +21,13 @@ internal sealed interface TandoorIngredientResolution {
         val measurement: Measurement,
     ) : TandoorIngredientResolution
 
+    data class AutoLinkedToFood(
+        val ingredient: TandoorIngredientDraft,
+        val foodId: FoodId.Product,
+        val measurement: Measurement,
+        val foodName: String,
+    ) : TandoorIngredientResolution
+
     data class EmptyProduct(
         val ingredient: TandoorIngredientDraft,
         val measurement: Measurement,

@@ -100,6 +100,9 @@ internal class ImportTandoorRecipeUseCase(
                             is TandoorIngredientResolution.LinkedToFood ->
                                 resolution.foodId to resolution.measurement
 
+                            is TandoorIngredientResolution.AutoLinkedToFood ->
+                                resolution.foodId to resolution.measurement
+
                             is TandoorIngredientResolution.EmptyProduct -> {
                                 val productId =
                                     productRepository.insertProduct(
@@ -156,6 +159,7 @@ private val TandoorIngredientResolution.ingredient: TandoorIngredientDraft
             is TandoorIngredientResolution.CanAutoResolve -> ingredient
             is TandoorIngredientResolution.ManuallyWeighed -> ingredient
             is TandoorIngredientResolution.LinkedToFood -> ingredient
+            is TandoorIngredientResolution.AutoLinkedToFood -> ingredient
             is TandoorIngredientResolution.EmptyProduct -> ingredient
             is TandoorIngredientResolution.Unresolved -> ingredient
         }

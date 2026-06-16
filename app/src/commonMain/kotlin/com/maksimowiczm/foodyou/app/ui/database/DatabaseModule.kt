@@ -31,6 +31,7 @@ fun Module.database() {
             credentialsRepository = get(),
             client = get(named(TandoorRemoteDataSource::class.qualifiedName!!)),
             importTandoorRecipeUseCase = get(),
+            autoLinkTandoorIngredientsUseCase = get(),
             productRepository = get(),
         )
     }
