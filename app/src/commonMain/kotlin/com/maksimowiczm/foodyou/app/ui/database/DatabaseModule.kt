@@ -4,9 +4,13 @@ import com.maksimowiczm.foodyou.app.ui.database.exportcsvproducts.exportCsvProdu
 import com.maksimowiczm.foodyou.app.ui.database.externaldatabases.externalDatabasesModule
 import com.maksimowiczm.foodyou.app.ui.database.importcsvproducts.importCsvProductsModule
 import com.maksimowiczm.foodyou.app.ui.database.swissfoodcompositiondatabase.swissFoodCompositionDatabaseModule
+import com.maksimowiczm.foodyou.app.ui.database.tandoor.TandoorBrowseViewModel
 import com.maksimowiczm.foodyou.app.ui.database.tandoor.TandoorConnectionViewModel
+import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorRemoteDataSource
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 
 fun Module.database() {
     exportCsvProductsModule()
@@ -14,4 +18,10 @@ fun Module.database() {
     importCsvProductsModule()
     swissFoodCompositionDatabaseModule()
     viewModelOf(::TandoorConnectionViewModel)
+    viewModel {
+        TandoorBrowseViewModel(
+            credentialsRepository = get(),
+            client = get(named(TandoorRemoteDataSource::class.qualifiedName!!)),
+        )
+    }
 }

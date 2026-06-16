@@ -34,13 +34,18 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun TandoorConnectionScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun TandoorConnectionScreen(
+    onBack: () -> Unit,
+    onBrowse: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val viewModel: TandoorConnectionViewModel = koinViewModel()
     val hasCredentials by viewModel.hasCredentials.collectAsStateWithLifecycle()
     val state by viewModel.connectionState.collectAsStateWithLifecycle()
 
     TandoorConnectionScreen(
         onBack = onBack,
+        onBrowse = onBrowse,
         hasCredentials = hasCredentials,
         state = state,
         onTestConnection = viewModel::testConnection,
@@ -53,6 +58,7 @@ fun TandoorConnectionScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 internal fun TandoorConnectionScreen(
     onBack: () -> Unit,
+    onBrowse: () -> Unit,
     hasCredentials: Boolean,
     state: TandoorConnectionState,
     onTestConnection: (serverUrl: String, apiToken: String) -> Unit,
@@ -149,6 +155,13 @@ internal fun TandoorConnectionScreen(
             }
 
             if (hasCredentials) {
+                OutlinedButton(
+                    onClick = onBrowse,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(stringResource(Res.string.action_tandoor_browse_recipes))
+                }
+
                 OutlinedButton(
                     onClick = onDisconnect,
                     modifier = Modifier.fillMaxWidth(),

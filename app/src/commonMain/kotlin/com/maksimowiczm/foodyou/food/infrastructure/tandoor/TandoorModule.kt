@@ -15,7 +15,11 @@ import org.koin.dsl.onClose
 internal fun Module.tandoorModule() {
     single(named(TandoorRemoteDataSource::class.qualifiedName!!)) {
             HttpClient {
-                install(HttpTimeout)
+                install(HttpTimeout) {
+                    requestTimeoutMillis = 15_000
+                    connectTimeoutMillis = 15_000
+                    socketTimeoutMillis = 15_000
+                }
                 install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
             }
         }

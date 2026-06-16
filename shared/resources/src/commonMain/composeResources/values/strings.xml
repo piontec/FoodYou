@@ -287,11 +287,15 @@
     <string name="headline_tandoor_server_url">Tandoor Server URL</string>
     <string name="headline_tandoor_api_token">API Token</string>
     <string name="action_tandoor_test_connection">Test connection</string>
+    <string name="action_tandoor_browse_recipes">Browse recipes</string>
     <string name="action_tandoor_disconnect">Disconnect</string>
     <string name="description_tandoor_token_hint">Generate a token in Tandoor → Settings → API tokens (tda_…)</string>
     <string name="info_tandoor_connection_success">Connection successful</string>
     <string name="error_tandoor_auth">Invalid API token (HTTP 403). Check your token in Tandoor → Settings → API tokens.</string>
     <string name="error_tandoor_reachability">Cannot reach Tandoor server. Check the URL and your network.</string>
+    <string name="headline_tandoor_browse">Browse Tandoor recipes</string>
+    <string name="description_tandoor_no_recipes">No recipes found</string>
+    <string name="error_tandoor_browse">Failed to load recipes</string>
 
     <string name="headline_external_databases">External databases</string>
     <string name="description_external_databases">Check out supported databases</string>
