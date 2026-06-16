@@ -49,7 +49,6 @@ import com.maksimowiczm.foodyou.common.compose.extension.LaunchedCollectWithLife
 import com.maksimowiczm.foodyou.common.domain.measurement.Measurement
 import com.maksimowiczm.foodyou.food.domain.entity.FoodId
 import com.maksimowiczm.foodyou.food.domain.usecase.ImportTandoorRecipeError
-import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorConnectionError
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorIngredientResolution
 import foodyou.app.generated.resources.*
 import kotlinx.coroutines.flow.Flow
@@ -128,9 +127,9 @@ internal fun TandoorImportScreen(
                         message =
                             when (val error = state.error) {
                                 TandoorImportScreenError.MissingCredentials ->
-                                    stringResource(Res.string.error_tandoor_browse)
+                                    stringResource(Res.string.error_tandoor_missing_credentials)
                                 is TandoorImportScreenError.Remote ->
-                                    stringResource(error.error.toResource())
+                                    stringResource(error.error.toRemoteError().toResource())
                                 TandoorImportScreenError.Generic ->
                                     stringResource(Res.string.error_tandoor_import)
                             },
@@ -202,12 +201,7 @@ private fun ReadyState(
 
         item {
             Text(
-                text =
-                    if (state.canImport) {
-                        stringResource(Res.string.description_tandoor_import_all_resolved)
-                    } else {
-                        stringResource(Res.string.description_tandoor_import_blocked)
-                    },
+                text = stringResource(state.statusMessage().toResource()),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -267,7 +261,7 @@ private fun SummaryCard(
                 style = MaterialTheme.typography.titleLarge,
             )
             Text(
-                text = "${stringResource(Res.string.recipe_servings)}: $servings",
+                text = stringResource(Res.string.label_tandoor_recipe_servings, servings),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -570,12 +564,6 @@ private fun MessageState(
         )
     }
 }
-
-private fun TandoorConnectionError.toResource() =
-    when (this) {
-        is TandoorConnectionError.AuthError -> Res.string.error_tandoor_auth
-        is TandoorConnectionError.ReachabilityError -> Res.string.error_tandoor_reachability
-    }
 
 private fun ImportTandoorRecipeError.toResource() =
     when (this) {

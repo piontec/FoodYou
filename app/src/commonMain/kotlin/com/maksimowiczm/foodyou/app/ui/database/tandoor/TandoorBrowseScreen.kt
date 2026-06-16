@@ -40,7 +40,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.maksimowiczm.foodyou.app.ui.common.component.ArrowBackIconButton
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeListItem
-import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorConnectionError
 import foodyou.app.generated.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -112,13 +111,14 @@ internal fun TandoorBrowseScreen(
 
                     TandoorBrowseState.MissingCredentials ->
                         ErrorState(
-                            message = stringResource(Res.string.error_tandoor_browse),
+                            message = stringResource(Res.string.error_tandoor_missing_credentials),
                             onRetry = onRetryCredentials,
                             modifier = Modifier.align(Alignment.Center),
                         )
 
                     TandoorBrowseState.Ready ->
                         RecipeResults(
+                            query = query,
                             recipes = recipes,
                             onRetry = onRetryRecipes,
                             onRecipeSelected = onRecipeSelected,
@@ -132,6 +132,7 @@ internal fun TandoorBrowseScreen(
 
 @Composable
 private fun RecipeResults(
+    query: String,
     recipes: LazyPagingItems<TandoorRecipeListItem>,
     onRetry: () -> Unit,
     onRecipeSelected: (Int) -> Unit,
@@ -139,27 +140,54 @@ private fun RecipeResults(
 ) {
     val refreshState = recipes.loadState.refresh
     val appendState = recipes.loadState.append
+    val listState =
+        resolveTandoorBrowseListState(
+            query = query,
+            itemCount = recipes.itemCount,
+            refreshState = refreshState,
+            appendState = appendState,
+        )
 
-    when {
-        refreshState is LoadState.Loading && recipes.itemCount == 0 ->
+    when (listState) {
+        TandoorBrowseListState.FullscreenLoading ->
             LoadingState(modifier = modifier)
 
-        refreshState is LoadState.Error && recipes.itemCount == 0 ->
+        is TandoorBrowseListState.FullscreenError ->
             ErrorState(
-                message = stringResource(refreshState.error.toTandoorErrorString()),
+                message = stringResource(listState.error.toResource()),
                 onRetry = onRetry,
                 modifier = modifier,
             )
 
-        recipes.itemCount == 0 && refreshState !is LoadState.Loading ->
-            EmptyState(modifier = modifier)
+        is TandoorBrowseListState.Empty ->
+            EmptyState(
+                query = query,
+                emptyState = listState.emptyState,
+                modifier = modifier,
+            )
 
-        else ->
+        is TandoorBrowseListState.Content ->
             LazyColumn(
                 modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
+                if (listState.showRefreshLoading) {
+                    item {
+                        LoadingRow(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+
+                listState.refreshError?.let { error ->
+                    item {
+                        ErrorState(
+                            message = stringResource(error.toResource()),
+                            onRetry = onRetry,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
                 items(
                     count = recipes.itemCount,
                     key = recipes.itemKey { it.id },
@@ -173,21 +201,16 @@ private fun RecipeResults(
                     }
                 }
 
-                if (appendState is LoadState.Loading) {
+                if (listState.showAppendLoading) {
                     item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                        }
+                        LoadingRow(modifier = Modifier.fillMaxWidth())
                     }
                 }
 
-                if (appendState is LoadState.Error) {
+                listState.appendError?.let { error ->
                     item {
                         ErrorState(
-                            message = stringResource(appendState.error.toTandoorErrorString()),
+                            message = stringResource(error.toResource()),
                             onRetry = onRetry,
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -250,10 +273,31 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun EmptyState(modifier: Modifier = Modifier) {
+private fun LoadingRow(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.padding(vertical = 16.dp),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun EmptyState(
+    query: String,
+    emptyState: TandoorBrowseEmptyState,
+    modifier: Modifier = Modifier,
+) {
+    val normalizedQuery = query.trim()
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Text(
-            text = stringResource(Res.string.description_tandoor_no_recipes),
+            text =
+                when (emptyState) {
+                    TandoorBrowseEmptyState.NoRecipes ->
+                        stringResource(Res.string.description_tandoor_no_recipes)
+                    TandoorBrowseEmptyState.NoSearchResults ->
+                        stringResource(Res.string.description_tandoor_no_search_results, normalizedQuery)
+                },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -287,10 +331,3 @@ private fun ErrorState(
         }
     }
 }
-
-private fun Throwable.toTandoorErrorString() =
-    when (this) {
-        is TandoorConnectionError.AuthError -> Res.string.error_tandoor_auth
-        is TandoorConnectionError.ReachabilityError -> Res.string.error_tandoor_reachability
-        else -> Res.string.error_tandoor_browse
-    }

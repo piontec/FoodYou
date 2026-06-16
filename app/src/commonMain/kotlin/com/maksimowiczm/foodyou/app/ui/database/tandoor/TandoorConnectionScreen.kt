@@ -27,7 +27,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maksimowiczm.foodyou.app.ui.common.component.ArrowBackIconButton
-import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorConnectionError
 import foodyou.app.generated.resources.*
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -86,10 +85,11 @@ internal fun TandoorConnectionScreen(
                 }
             }
             is TandoorConnectionState.Error -> {
-                val msg = when (state.error) {
-                    is TandoorConnectionError.AuthError -> authErrorMsg
-                    is TandoorConnectionError.ReachabilityError -> reachabilityErrorMsg
-                }
+                val msg =
+                    when (state.error.toRemoteError()) {
+                        TandoorRemoteError.Auth -> authErrorMsg
+                        TandoorRemoteError.Reachability -> reachabilityErrorMsg
+                    }
                 scope.launch { snackbarHostState.showSnackbar(msg) }
             }
             else -> Unit

@@ -294,10 +294,13 @@
     <string name="error_tandoor_auth">Invalid API token (HTTP 403). Check your token in Tandoor → Settings → API tokens.</string>
     <string name="error_tandoor_reachability">Cannot reach Tandoor server. Check the URL and your network.</string>
     <string name="headline_tandoor_browse">Browse Tandoor recipes</string>
-    <string name="description_tandoor_no_recipes">No recipes found</string>
+    <string name="description_tandoor_no_recipes">No recipes are available on this Tandoor server yet</string>
+    <string name="description_tandoor_no_search_results">No recipes match "%1$s"</string>
     <string name="error_tandoor_browse">Failed to load recipes</string>
+    <string name="error_tandoor_missing_credentials">Connect to Tandoor before browsing or importing recipes.</string>
     <string name="headline_tandoor_import">Import Tandoor recipe</string>
     <string name="description_tandoor_import_all_resolved">All ingredients are ready to import</string>
+    <string name="description_tandoor_import_no_ingredients">This recipe has no ingredients to resolve. You can import it as-is.</string>
     <string name="description_tandoor_import_auto_resolved">Auto-resolved</string>
     <string name="description_tandoor_import_needs_resolution">Needs resolution</string>
     <string name="description_tandoor_import_missing_measurement">No gram or milliliter measurement available</string>
@@ -316,6 +319,7 @@
     <string name="label_tandoor_resolved_linked">Linked to food</string>
     <string name="label_tandoor_resolved_empty">Empty product</string>
     <string name="action_tandoor_override">Override</string>
+    <string name="label_tandoor_recipe_servings">Servings: %1$d</string>
     <string name="label_gram" translatable="false">g</string>
     <string name="label_milliliter" translatable="false">ml</string>
 
