@@ -296,6 +296,15 @@
     <string name="headline_tandoor_browse">Browse Tandoor recipes</string>
     <string name="description_tandoor_no_recipes">No recipes found</string>
     <string name="error_tandoor_browse">Failed to load recipes</string>
+    <string name="headline_tandoor_import">Import Tandoor recipe</string>
+    <string name="description_tandoor_import_all_resolved">All ingredients are ready to import</string>
+    <string name="description_tandoor_import_auto_resolved">Auto-resolved</string>
+    <string name="description_tandoor_import_needs_resolution">Needs resolution</string>
+    <string name="description_tandoor_import_missing_measurement">No gram or milliliter measurement available</string>
+    <string name="description_tandoor_import_missing_amount">No measurable amount provided</string>
+    <string name="description_tandoor_import_blocked">Some ingredients need resolution before import</string>
+    <string name="description_tandoor_import_unexpected_error">Import failed. Please try again.</string>
+    <string name="error_tandoor_import">Failed to load recipe import details</string>
 
     <string name="headline_external_databases">External databases</string>
     <string name="description_external_databases">Check out supported databases</string>

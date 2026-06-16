@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class TandoorRemoteDataSourceTest {
@@ -60,7 +61,8 @@ class TandoorRemoteDataSourceTest {
         val result = dataSource.testConnection()
 
         assertTrue(result.isFailure)
-        assertIs<TandoorConnectionError.AuthError>(result.exceptionOrNull())
+        val error = assertIs<TandoorConnectionError.AuthError>(result.exceptionOrNull())
+        assertEquals("Tandoor API token is invalid (HTTP 403).", error.message)
     }
 
     @Test
@@ -90,7 +92,8 @@ class TandoorRemoteDataSourceTest {
         val dataSource = TandoorRemoteDataSource(client, serverUrl, "tda_test123")
         dataSource.testConnection()
 
-        assertTrue(capturedUrl?.contains("/api/recipe/") == true)
-        assertTrue(capturedUrl?.contains("page_size=1") == true)
+        val url = assertNotNull(capturedUrl)
+        assertTrue(url.contains("/api/recipe/"))
+        assertTrue(url.contains("page_size=1"))
     }
 }

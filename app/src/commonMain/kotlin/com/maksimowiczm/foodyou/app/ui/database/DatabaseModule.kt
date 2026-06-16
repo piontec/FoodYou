@@ -6,6 +6,7 @@ import com.maksimowiczm.foodyou.app.ui.database.importcsvproducts.importCsvProdu
 import com.maksimowiczm.foodyou.app.ui.database.swissfoodcompositiondatabase.swissFoodCompositionDatabaseModule
 import com.maksimowiczm.foodyou.app.ui.database.tandoor.TandoorBrowseViewModel
 import com.maksimowiczm.foodyou.app.ui.database.tandoor.TandoorConnectionViewModel
+import com.maksimowiczm.foodyou.app.ui.database.tandoor.TandoorImportViewModel
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorRemoteDataSource
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModelOf
@@ -22,6 +23,14 @@ fun Module.database() {
         TandoorBrowseViewModel(
             credentialsRepository = get(),
             client = get(named(TandoorRemoteDataSource::class.qualifiedName!!)),
+        )
+    }
+    viewModel { (recipeId: Int) ->
+        TandoorImportViewModel(
+            recipeId = recipeId,
+            credentialsRepository = get(),
+            client = get(named(TandoorRemoteDataSource::class.qualifiedName!!)),
+            importTandoorRecipeUseCase = get(),
         )
     }
 }

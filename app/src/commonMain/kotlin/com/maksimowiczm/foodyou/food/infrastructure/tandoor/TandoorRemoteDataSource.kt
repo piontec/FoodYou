@@ -1,6 +1,7 @@
 package com.maksimowiczm.foodyou.food.infrastructure.tandoor
 
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.model.TandoorPageDto
+import com.maksimowiczm.foodyou.food.infrastructure.tandoor.model.TandoorRecipeDetailDto
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.model.TandoorRecipeListItemDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -32,6 +33,27 @@ internal class TandoorRemoteDataSource(
 
             when (response.status) {
                 HttpStatusCode.OK -> Result.success(response.body<TandoorPageDto<TandoorRecipeListItemDto>>())
+                HttpStatusCode.Forbidden -> Result.failure(TandoorConnectionError.AuthError())
+                else -> Result.failure(
+                    TandoorConnectionError.ReachabilityError(
+                        "Unexpected status: ${response.status}"
+                    )
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Result.failure(TandoorConnectionError.ReachabilityError(e.message))
+        }
+
+    suspend fun getRecipe(id: Int): Result<TandoorRecipeDetailDto> =
+        try {
+            val response = client.get("$serverUrl/api/recipe/$id/") {
+                header(HttpHeaders.Authorization, "Bearer $apiToken")
+            }
+
+            when (response.status) {
+                HttpStatusCode.OK -> Result.success(response.body<TandoorRecipeDetailDto>())
                 HttpStatusCode.Forbidden -> Result.failure(TandoorConnectionError.AuthError())
                 else -> Result.failure(
                     TandoorConnectionError.ReachabilityError(
