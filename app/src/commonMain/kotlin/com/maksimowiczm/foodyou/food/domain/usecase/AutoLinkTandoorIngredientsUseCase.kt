@@ -26,6 +26,22 @@ internal class AutoLinkTandoorIngredientsUseCase(
                         resolution
                     }
 
+                // If a CanAutoResolve ingredient has no nutrition properties, try to link it to
+                // an existing food in the app database so nutrition data is preserved.
+                is TandoorIngredientResolution.CanAutoResolve ->
+                    if (resolution.ingredient.properties.isEmpty()) {
+                        matchRepository.findConfidentMatch(resolution.ingredient.foodName)?.let { product ->
+                            TandoorIngredientResolution.AutoLinkedToFood(
+                                ingredient = resolution.ingredient,
+                                foodId = product.id,
+                                measurement = resolution.measurement,
+                                foodName = product.name,
+                            )
+                        } ?: resolution
+                    } else {
+                        resolution
+                    }
+
                 else -> resolution
             }
         }
