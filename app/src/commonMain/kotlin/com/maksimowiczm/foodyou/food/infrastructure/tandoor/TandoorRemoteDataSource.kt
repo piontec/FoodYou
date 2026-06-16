@@ -10,6 +10,7 @@ import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.utils.io.CancellationException
+import kotlinx.serialization.SerializationException
 
 internal class TandoorRemoteDataSource(
     private val client: HttpClient,
@@ -63,6 +64,10 @@ internal class TandoorRemoteDataSource(
             }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: SerializationException) {
+            Result.failure(
+                TandoorConnectionError.ReachabilityError("Recipe response schema mismatch: ${e.message}"),
+            )
         } catch (e: Exception) {
             Result.failure(TandoorConnectionError.ReachabilityError(e.message))
         }

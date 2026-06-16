@@ -20,7 +20,18 @@ internal fun Module.tandoorModule() {
                     connectTimeoutMillis = 15_000
                     socketTimeoutMillis = 15_000
                 }
-                install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+                install(ContentNegotiation) {
+                    json(
+                        Json {
+                            ignoreUnknownKeys = true
+                            // Treat explicit JSON null as the default value for non-nullable
+                            // fields that have a default (e.g. emptyList()). Without this,
+                            // a server-side null on a list field throws SerializationException
+                            // which is incorrectly mapped to ReachabilityError.
+                            coerceInputValues = true
+                        },
+                    )
+                }
             }
         }
         .onClose { it?.close() }
