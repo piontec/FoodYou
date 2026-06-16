@@ -147,7 +147,7 @@ class TandoorGetRecipeTest {
         assertEquals(300.0, ingredient.amount)
         assertEquals("g", ingredient.unit?.baseUnit)
         assertEquals("Orzo pasta", ingredient.food.name)
-        assertEquals("property-calories", ingredient.food.properties.single().propertyType.openDataSlug)
+        assertEquals("property-calories", ingredient.food.properties.single().propertyType?.openDataSlug)
         assertEquals(350.0, ingredient.food.properties.single().propertyAmount)
     }
 

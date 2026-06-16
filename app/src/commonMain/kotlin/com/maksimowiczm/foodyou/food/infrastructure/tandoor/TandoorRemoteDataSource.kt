@@ -9,6 +9,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.JsonConvertException
 import io.ktor.utils.io.CancellationException
 import kotlinx.serialization.SerializationException
 
@@ -54,7 +55,10 @@ internal class TandoorRemoteDataSource(
             }
 
             when (response.status) {
-                HttpStatusCode.OK -> Result.success(response.body<TandoorRecipeDetailDto>())
+                HttpStatusCode.OK -> {
+                    val dto = response.body<TandoorRecipeDetailDto>()
+                    Result.success(dto)
+                }
                 HttpStatusCode.Forbidden -> Result.failure(TandoorConnectionError.AuthError())
                 else -> Result.failure(
                     TandoorConnectionError.ReachabilityError(
@@ -64,6 +68,10 @@ internal class TandoorRemoteDataSource(
             }
         } catch (e: CancellationException) {
             throw e
+        } catch (e: JsonConvertException) {
+            Result.failure(
+                TandoorConnectionError.ReachabilityError("Recipe response schema mismatch: ${e.message}"),
+            )
         } catch (e: SerializationException) {
             Result.failure(
                 TandoorConnectionError.ReachabilityError("Recipe response schema mismatch: ${e.message}"),

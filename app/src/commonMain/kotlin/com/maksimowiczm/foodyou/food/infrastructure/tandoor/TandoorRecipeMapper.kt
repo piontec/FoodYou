@@ -24,9 +24,10 @@ internal object TandoorRecipeMapper {
                             unitName = ingredient.unit?.name.orEmpty(),
                             unitBaseUnit = ingredient.unit?.baseUnit,
                             properties =
-                                ingredient.food.properties.map { property ->
+                                ingredient.food.properties.mapNotNull { property ->
+                                    val type = property.propertyType ?: return@mapNotNull null
                                     TandoorIngredientProperty(
-                                        openDataSlug = property.propertyType.openDataSlug,
+                                        openDataSlug = type.openDataSlug,
                                         amount = property.propertyAmount,
                                     )
                                 },
