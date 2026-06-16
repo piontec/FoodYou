@@ -15,6 +15,7 @@ import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientDraft
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeDraft
 import com.maksimowiczm.foodyou.food.domain.repository.ProductRepository
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorIngredientResolution
+import com.maksimowiczm.foodyou.food.infrastructure.tandoor.autoResolve
 
 internal sealed interface ImportTandoorRecipeError {
     data class NeedsResolution(
@@ -40,31 +41,84 @@ internal class ImportTandoorRecipeUseCase(
         draft: TandoorRecipeDraft,
         resolutions: List<TandoorIngredientResolution>,
     ): Result<FoodId.Recipe, ImportTandoorRecipeError> {
-        val unresolved = resolutions.filterIsInstance<TandoorIngredientResolution.Unresolved>()
+        val unresolved =
+            resolutions.filterIsInstance<TandoorIngredientResolution.Unresolved>() +
+                if (resolutions.size != draft.ingredients.size) {
+                    draft.ingredients
+                        .filter { ingredient ->
+                            resolutions.none { resolution -> resolution.ingredient == ingredient }
+                        }.mapNotNull { ingredient ->
+                            autoResolve(ingredient) as? TandoorIngredientResolution.Unresolved
+                        }
+                } else {
+                    emptyList()
+                }
         if (unresolved.isNotEmpty()) {
             return Err(ImportTandoorRecipeError.NeedsResolution(unresolved))
         }
-
-        val autoResolved = resolutions.filterIsInstance<TandoorIngredientResolution.CanAutoResolve>()
+        if (resolutions.size != draft.ingredients.size) {
+            return Err(ImportTandoorRecipeError.NeedsResolution(emptyList()))
+        }
 
         return try {
             transactionProvider.withTransaction {
                 val ingredients =
-                    autoResolved.map { resolution ->
-                        val ingredient = resolution.ingredient
-                        val productId =
-                            productRepository.insertProduct(
-                                name = ingredient.foodName,
-                                brand = null,
-                                barcode = null,
-                                note = null,
-                                isLiquid = resolution.measurement is Measurement.Milliliter,
-                                packageWeight = null,
-                                servingWeight = null,
-                                source = FoodSource(FoodSource.Type.Tandoor),
-                                nutritionFacts = ingredient.toNutritionFacts(),
-                            )
-                        productId to resolution.measurement
+                    resolutions.map { resolution ->
+                        when (resolution) {
+                            is TandoorIngredientResolution.CanAutoResolve -> {
+                                val productId =
+                                    productRepository.insertProduct(
+                                        name = resolution.ingredient.foodName,
+                                        brand = null,
+                                        barcode = null,
+                                        note = null,
+                                        isLiquid = resolution.measurement is Measurement.Milliliter,
+                                        packageWeight = null,
+                                        servingWeight = null,
+                                        source = FoodSource(FoodSource.Type.Tandoor),
+                                        nutritionFacts = resolution.ingredient.toNutritionFacts(),
+                                    )
+                                productId to resolution.measurement
+                            }
+
+                            is TandoorIngredientResolution.ManuallyWeighed -> {
+                                val productId =
+                                    productRepository.insertProduct(
+                                        name = resolution.ingredient.foodName,
+                                        brand = null,
+                                        barcode = null,
+                                        note = null,
+                                        isLiquid = resolution.measurement is Measurement.Milliliter,
+                                        packageWeight = null,
+                                        servingWeight = null,
+                                        source = FoodSource(FoodSource.Type.Tandoor),
+                                        nutritionFacts = resolution.ingredient.toNutritionFactsOrEmpty(),
+                                    )
+                                productId to resolution.measurement
+                            }
+
+                            is TandoorIngredientResolution.LinkedToFood ->
+                                resolution.foodId to resolution.measurement
+
+                            is TandoorIngredientResolution.EmptyProduct -> {
+                                val productId =
+                                    productRepository.insertProduct(
+                                        name = resolution.ingredient.foodName,
+                                        brand = null,
+                                        barcode = null,
+                                        note = null,
+                                        isLiquid = resolution.measurement is Measurement.Milliliter,
+                                        packageWeight = null,
+                                        servingWeight = null,
+                                        source = FoodSource(FoodSource.Type.Tandoor),
+                                        nutritionFacts = NutritionFacts.Empty,
+                                    )
+                                productId to resolution.measurement
+                            }
+
+                            is TandoorIngredientResolution.Unresolved ->
+                                error("Unresolved ingredients should be filtered before import.")
+                        }
                     }
 
                 when (
@@ -73,7 +127,9 @@ internal class ImportTandoorRecipeUseCase(
                             name = draft.name,
                             servings = draft.servings,
                             note = draft.note,
-                            isLiquid = autoResolved.isNotEmpty() && autoResolved.all { it.measurement is Measurement.Milliliter },
+                            isLiquid =
+                                ingredients.isNotEmpty() &&
+                                    ingredients.all { (_, measurement) -> measurement is Measurement.Milliliter },
                             ingredients = ingredients,
                             history = FoodHistory.Imported(dateProvider.nowInstant()),
                         )
@@ -93,6 +149,16 @@ internal class ImportTandoorRecipeUseCase(
         }
     }
 }
+
+private val TandoorIngredientResolution.ingredient: TandoorIngredientDraft
+    get() =
+        when (this) {
+            is TandoorIngredientResolution.CanAutoResolve -> ingredient
+            is TandoorIngredientResolution.ManuallyWeighed -> ingredient
+            is TandoorIngredientResolution.LinkedToFood -> ingredient
+            is TandoorIngredientResolution.EmptyProduct -> ingredient
+            is TandoorIngredientResolution.Unresolved -> ingredient
+        }
 
 private fun TandoorIngredientDraft.toNutritionFacts(): NutritionFacts {
     val scale =
@@ -114,3 +180,10 @@ private fun TandoorIngredientDraft.toNutritionFacts(): NutritionFacts {
         carbohydrates = nutrient("property-carbohydrates"),
     )
 }
+
+private fun TandoorIngredientDraft.toNutritionFactsOrEmpty(): NutritionFacts =
+    if (properties.isEmpty()) {
+        NutritionFacts.Empty
+    } else {
+        toNutritionFacts()
+    }

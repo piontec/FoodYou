@@ -105,28 +105,7 @@ class ImportTandoorRecipeUseCaseTest {
 
     @Test
     fun importIsBlockedWhenAnyIngredientIsUnresolved() = kotlinx.coroutines.runBlocking {
-        val productRepository = FakeProductRepository()
-        val recipeRepository = FakeRecipeRepository()
-        val historyRepository = FakeFoodHistoryRepository()
-        val transactionProvider =
-            FakeTransactionProvider(
-                participants = listOf(productRepository, recipeRepository, historyRepository),
-            )
-        val createRecipeUseCase =
-            CreateRecipeUseCase(
-                recipeRepository = recipeRepository,
-                productRepository = productRepository,
-                historyRepository = historyRepository,
-                transactionProvider = transactionProvider,
-                logger = NoOpLogger,
-            )
-        val useCase =
-            ImportTandoorRecipeUseCase(
-                productRepository = productRepository,
-                createRecipeUseCase = createRecipeUseCase,
-                transactionProvider = transactionProvider,
-                dateProvider = FakeDateProvider(Instant.parse("2026-06-16T12:34:56Z")),
-            )
+        val (useCase, productRepository, recipeRepository) = buildFixture()
         val draft =
             fullyResolvableDraft().copy(
                 ingredients =
@@ -155,6 +134,169 @@ class ImportTandoorRecipeUseCaseTest {
         assertEquals(1, needsResolution.unresolved.size)
         assertEquals(0, productRepository.insertedProducts.size)
         assertEquals(0, recipeRepository.insertedRecipes.size)
+    }
+
+    @Test
+    fun manuallyWeighedIngredientCreatesProductAndUsesManualMeasurement() = kotlinx.coroutines.runBlocking {
+        val (useCase, productRepository, recipeRepository) = buildFixture()
+        val ingredient = fullyResolvableDraft().ingredients.first()
+        val draft = fullyResolvableDraft().copy(ingredients = listOf(ingredient))
+        val measurement = Measurement.Gram(125.0)
+
+        val result =
+            useCase.import(
+                draft = draft,
+                resolutions =
+                    listOf(
+                        TandoorIngredientResolution.ManuallyWeighed(
+                            ingredient = ingredient,
+                            measurement = measurement,
+                        ),
+                    ),
+            )
+
+        val success = assertIs<Result.Success<FoodId.Recipe, ImportTandoorRecipeError>>(result)
+        assertEquals(FoodId.Recipe(1L), success.data)
+        assertEquals(1, productRepository.insertedProducts.size)
+        assertEquals(
+            NutrientValue.Complete(350.0),
+            productRepository.insertedProducts.single().nutritionFacts.energy,
+        )
+        assertEquals(
+            NutrientValue.Complete(12.0),
+            productRepository.insertedProducts.single().nutritionFacts.proteins,
+        )
+        assertEquals(
+            measurement,
+            recipeRepository.insertedRecipes.single().ingredients.single().measurement,
+        )
+    }
+
+    @Test
+    fun manuallyWeighedWithNoPropertiesCreatesEmptyProduct() = kotlinx.coroutines.runBlocking {
+        val (useCase, productRepository, recipeRepository) = buildFixture()
+        val ingredient = unresolvedIngredientDraft()
+        val measurement = Measurement.Gram(18.0)
+
+        val result =
+            useCase.import(
+                draft = fullyResolvableDraft().copy(ingredients = listOf(ingredient)),
+                resolutions =
+                    listOf(
+                        TandoorIngredientResolution.ManuallyWeighed(
+                            ingredient = ingredient,
+                            measurement = measurement,
+                        ),
+                    ),
+            )
+
+        val success = assertIs<Result.Success<FoodId.Recipe, ImportTandoorRecipeError>>(result)
+        assertEquals(FoodId.Recipe(1L), success.data)
+        assertEquals(1, productRepository.insertedProducts.size)
+        assertEquals(
+            NutritionFacts.Empty,
+            productRepository.insertedProducts.single().nutritionFacts,
+        )
+        assertEquals(
+            measurement,
+            recipeRepository.insertedRecipes.single().ingredients.single().measurement,
+        )
+    }
+
+    @Test
+    fun linkedToFoodUsesExistingFoodIdWithoutCreatingProduct() = kotlinx.coroutines.runBlocking {
+        val (useCase, productRepository, recipeRepository) = buildFixture()
+        val ingredient = unresolvedIngredientDraft(foodName = "Sauce")
+        val existingFoodId =
+            productRepository.seedProduct(
+                name = "Pantry sauce",
+                nutritionFacts = NutritionFacts.Empty,
+            )
+        val measurement = Measurement.Gram(100.0)
+
+        val result =
+            useCase.import(
+                draft = fullyResolvableDraft().copy(ingredients = listOf(ingredient)),
+                resolutions =
+                    listOf(
+                        TandoorIngredientResolution.LinkedToFood(
+                            ingredient = ingredient,
+                            foodId = existingFoodId,
+                            measurement = measurement,
+                        ),
+                    ),
+            )
+
+        val success = assertIs<Result.Success<FoodId.Recipe, ImportTandoorRecipeError>>(result)
+        assertEquals(FoodId.Recipe(1L), success.data)
+        assertEquals(0, productRepository.insertedProducts.size)
+        val recipeIngredient = recipeRepository.insertedRecipes.single().ingredients.single()
+        assertEquals(existingFoodId, recipeIngredient.food.id)
+        assertEquals(measurement, recipeIngredient.measurement)
+    }
+
+    @Test
+    fun emptyProductResolutionCreatesZeroNutritionProduct() = kotlinx.coroutines.runBlocking {
+        val (useCase, productRepository, recipeRepository) = buildFixture()
+        val ingredient = unresolvedIngredientDraft(foodName = "Mystery spice")
+        val measurement = Measurement.Gram(1.0)
+
+        val result =
+            useCase.import(
+                draft = fullyResolvableDraft().copy(ingredients = listOf(ingredient)),
+                resolutions =
+                    listOf(
+                        TandoorIngredientResolution.EmptyProduct(
+                            ingredient = ingredient,
+                            measurement = measurement,
+                        ),
+                    ),
+            )
+
+        val success = assertIs<Result.Success<FoodId.Recipe, ImportTandoorRecipeError>>(result)
+        assertEquals(FoodId.Recipe(1L), success.data)
+        assertEquals(1, productRepository.insertedProducts.size)
+        assertEquals(
+            NutritionFacts.Empty,
+            productRepository.insertedProducts.single().nutritionFacts,
+        )
+        assertEquals(
+            measurement,
+            recipeRepository.insertedRecipes.single().ingredients.single().measurement,
+        )
+    }
+
+    @Test
+    fun mixedAutoAndManualResolutionsImportsSuccessfully() = kotlinx.coroutines.runBlocking {
+        val (useCase, productRepository, recipeRepository) = buildFixture()
+        val draft = fullyResolvableDraft()
+        val manualMeasurement = Measurement.Milliliter(150.0)
+
+        val result =
+            useCase.import(
+                draft = draft,
+                resolutions =
+                    listOf(
+                        autoResolve(draft.ingredients.first()),
+                        TandoorIngredientResolution.ManuallyWeighed(
+                            ingredient = draft.ingredients.last(),
+                            measurement = manualMeasurement,
+                        ),
+                    ),
+            )
+
+        val success = assertIs<Result.Success<FoodId.Recipe, ImportTandoorRecipeError>>(result)
+        assertEquals(FoodId.Recipe(1L), success.data)
+        assertEquals(2, productRepository.insertedProducts.size)
+        assertEquals(2, recipeRepository.insertedRecipes.single().ingredients.size)
+        assertEquals(
+            Measurement.Gram(300.0),
+            recipeRepository.insertedRecipes.single().ingredients.first().measurement,
+        )
+        assertEquals(
+            manualMeasurement,
+            recipeRepository.insertedRecipes.single().ingredients.last().measurement,
+        )
     }
 
     @Test
@@ -190,6 +332,44 @@ class ImportTandoorRecipeUseCaseTest {
         assertEquals(0, productRepository.insertedProducts.size)
         assertEquals(0, recipeRepository.insertedRecipes.size)
         assertEquals(0, historyRepository.inserted.size)
+    }
+
+    private data class Fixture(
+        val useCase: ImportTandoorRecipeUseCase,
+        val productRepository: FakeProductRepository,
+        val recipeRepository: FakeRecipeRepository,
+        val historyRepository: FakeFoodHistoryRepository,
+    )
+
+    private fun buildFixture(
+        recipeRepository: FakeRecipeRepository = FakeRecipeRepository(),
+    ): Fixture {
+        val productRepository = FakeProductRepository()
+        val historyRepository = FakeFoodHistoryRepository()
+        val transactionProvider =
+            FakeTransactionProvider(
+                participants = listOf(productRepository, recipeRepository, historyRepository),
+            )
+        val createRecipeUseCase =
+            CreateRecipeUseCase(
+                recipeRepository = recipeRepository,
+                productRepository = productRepository,
+                historyRepository = historyRepository,
+                transactionProvider = transactionProvider,
+                logger = NoOpLogger,
+            )
+        return Fixture(
+            useCase =
+                ImportTandoorRecipeUseCase(
+                    productRepository = productRepository,
+                    createRecipeUseCase = createRecipeUseCase,
+                    transactionProvider = transactionProvider,
+                    dateProvider = FakeDateProvider(Instant.parse("2026-06-16T12:34:56Z")),
+                ),
+            productRepository = productRepository,
+            recipeRepository = recipeRepository,
+            historyRepository = historyRepository,
+        )
     }
 
     private fun fullyResolvableDraft() =
@@ -246,6 +426,22 @@ class ImportTandoorRecipeUseCaseTest {
                     ),
                 ),
         )
+
+    private fun unresolvedIngredientDraft(
+        foodName: String = "Garlic",
+    ) = TandoorIngredientDraft(
+        tandoorFoodId = 99,
+        foodName = foodName,
+        amount = 2.0,
+        unitName = "clove",
+        unitBaseUnit = null,
+        properties = emptyList(),
+        propertiesFoodAmount = 100.0,
+        propertiesFoodBaseUnit = "g",
+        conversions = emptyList(),
+        noAmount = false,
+        note = "minced",
+    )
 }
 
 private interface TransactionParticipant {
@@ -323,10 +519,12 @@ private class FakeProductRepository : ProductRepository, TransactionParticipant 
     )
 
     val insertedProducts = mutableListOf<InsertedProduct>()
+    private val seededProducts = mutableListOf<Product>()
 
     override fun observeProduct(id: FoodId.Product): Flow<Product?> =
         flowOf(
-            insertedProducts
+            seededProducts.firstOrNull { it.id == id }
+                ?: insertedProducts
                 .firstOrNull { it.id == id }
                 ?.let { product ->
                     Product(
@@ -386,12 +584,37 @@ private class FakeProductRepository : ProductRepository, TransactionParticipant 
 
     override suspend fun deleteProduct(product: Product) = error("Not used in test")
 
-    override fun snapshot(): Any = insertedProducts.toList()
+    fun seedProduct(
+        name: String,
+        isLiquid: Boolean = false,
+        nutritionFacts: NutritionFacts,
+    ): FoodId.Product {
+        val id = FoodId.Product(-(seededProducts.size.toLong() + 1))
+        seededProducts +=
+            Product(
+                id = id,
+                name = name,
+                brand = null,
+                barcode = null,
+                note = null,
+                isLiquid = isLiquid,
+                packageWeight = null,
+                servingWeight = null,
+                source = FoodSource(FoodSource.Type.User),
+                nutritionFacts = nutritionFacts,
+            )
+        return id
+    }
+
+    override fun snapshot(): Any = insertedProducts.toList() to seededProducts.toList()
 
     override fun restore(snapshot: Any) {
-        insertedProducts.clear()
         @Suppress("UNCHECKED_CAST")
-        insertedProducts += snapshot as List<InsertedProduct>
+        val snapshots = snapshot as Pair<List<InsertedProduct>, List<Product>>
+        insertedProducts.clear()
+        insertedProducts += snapshots.first
+        seededProducts.clear()
+        seededProducts += snapshots.second
     }
 }
 

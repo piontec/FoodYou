@@ -1,10 +1,27 @@
 package com.maksimowiczm.foodyou.food.infrastructure.tandoor
 
 import com.maksimowiczm.foodyou.common.domain.measurement.Measurement
+import com.maksimowiczm.foodyou.food.domain.entity.FoodId
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientDraft
 
 internal sealed interface TandoorIngredientResolution {
     data class CanAutoResolve(
+        val ingredient: TandoorIngredientDraft,
+        val measurement: Measurement,
+    ) : TandoorIngredientResolution
+
+    data class ManuallyWeighed(
+        val ingredient: TandoorIngredientDraft,
+        val measurement: Measurement,
+    ) : TandoorIngredientResolution
+
+    data class LinkedToFood(
+        val ingredient: TandoorIngredientDraft,
+        val foodId: FoodId,
+        val measurement: Measurement,
+    ) : TandoorIngredientResolution
+
+    data class EmptyProduct(
         val ingredient: TandoorIngredientDraft,
         val measurement: Measurement,
     ) : TandoorIngredientResolution

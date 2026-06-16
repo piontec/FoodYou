@@ -305,6 +305,17 @@
     <string name="description_tandoor_import_blocked">Some ingredients need resolution before import</string>
     <string name="description_tandoor_import_unexpected_error">Import failed. Please try again.</string>
     <string name="error_tandoor_import">Failed to load recipe import details</string>
+    <string name="action_tandoor_assign_weight">Assign weight</string>
+    <string name="action_tandoor_link_food">Link existing food</string>
+    <string name="action_tandoor_create_empty_product">Create empty product</string>
+    <string name="label_tandoor_no_conversion">No weight conversion available</string>
+    <string name="label_tandoor_no_amount">No measurable amount</string>
+    <string name="label_tandoor_resolved_auto">Auto-resolved</string>
+    <string name="label_tandoor_resolved_weight">Weight assigned</string>
+    <string name="label_tandoor_resolved_linked">Linked to food</string>
+    <string name="label_tandoor_resolved_empty">Empty product</string>
+    <string name="label_gram" translatable="false">g</string>
+    <string name="label_milliliter" translatable="false">ml</string>
 
     <string name="headline_external_databases">External databases</string>
     <string name="description_external_databases">Check out supported databases</string>
