@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 
 internal sealed interface TandoorConnectionState {
@@ -36,6 +37,15 @@ internal class TandoorConnectionViewModel(
                 started = SharingStarted.WhileSubscribed(2_000),
                 initialValue = false,
             )
+
+    private val _loadedCredentials = MutableStateFlow<Pair<String, String>?>(null)
+    val loadedCredentials: StateFlow<Pair<String, String>?> = _loadedCredentials.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _loadedCredentials.update { credentialsRepository.load() }
+        }
+    }
 
     private val _connectionState = MutableStateFlow<TandoorConnectionState>(TandoorConnectionState.Idle)
     val connectionState: StateFlow<TandoorConnectionState> = _connectionState.asStateFlow()

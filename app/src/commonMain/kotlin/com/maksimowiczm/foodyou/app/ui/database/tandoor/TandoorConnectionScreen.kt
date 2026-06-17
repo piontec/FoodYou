@@ -8,9 +8,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -24,6 +30,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maksimowiczm.foodyou.app.ui.common.component.ArrowBackIconButton
@@ -41,12 +50,14 @@ fun TandoorConnectionScreen(
     val viewModel: TandoorConnectionViewModel = koinViewModel()
     val hasCredentials by viewModel.hasCredentials.collectAsStateWithLifecycle()
     val state by viewModel.connectionState.collectAsStateWithLifecycle()
+    val loadedCredentials by viewModel.loadedCredentials.collectAsStateWithLifecycle()
 
     TandoorConnectionScreen(
         onBack = onBack,
         onBrowse = onBrowse,
         hasCredentials = hasCredentials,
         state = state,
+        loadedCredentials = loadedCredentials,
         onTestConnection = viewModel::testConnection,
         onSave = viewModel::save,
         onDisconnect = viewModel::disconnect,
@@ -60,6 +71,7 @@ internal fun TandoorConnectionScreen(
     onBrowse: () -> Unit,
     hasCredentials: Boolean,
     state: TandoorConnectionState,
+    loadedCredentials: Pair<String, String>?,
     onTestConnection: (serverUrl: String, apiToken: String) -> Unit,
     onSave: (serverUrl: String, apiToken: String) -> Unit,
     onDisconnect: () -> Unit,
@@ -71,6 +83,16 @@ internal fun TandoorConnectionScreen(
 
     var serverUrl by rememberSaveable { mutableStateOf("") }
     var apiToken by rememberSaveable { mutableStateOf("") }
+    var passwordHidden by rememberSaveable { mutableStateOf(true) }
+    var hasBeenInitialized by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(loadedCredentials) {
+        if (!hasBeenInitialized && loadedCredentials != null) {
+            serverUrl = loadedCredentials.first
+            apiToken = loadedCredentials.second
+            hasBeenInitialized = true
+        }
+    }
 
     val successMsg = stringResource(Res.string.info_tandoor_connection_success)
     val authErrorMsg = stringResource(Res.string.error_tandoor_auth)
@@ -137,6 +159,18 @@ internal fun TandoorConnectionScreen(
                 label = { Text(stringResource(Res.string.headline_tandoor_api_token)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                visualTransformation = if (passwordHidden) PasswordVisualTransformation() else VisualTransformation.None,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { passwordHidden = !passwordHidden }) {
+                        Icon(
+                            imageVector = if (passwordHidden) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                            contentDescription = if (passwordHidden) "Show API token" else "Hide API token",
+                        )
+                    }
+                },
             )
 
             Spacer(Modifier.height(8.dp))
