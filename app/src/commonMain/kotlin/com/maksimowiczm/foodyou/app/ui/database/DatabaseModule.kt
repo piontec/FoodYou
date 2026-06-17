@@ -22,6 +22,7 @@ fun Module.database() {
     viewModel {
         TandoorBrowseViewModel(
             credentialsRepository = get(),
+            recipeRepository = get(),
             client = get(named(TandoorRemoteDataSource::class.qualifiedName!!)),
         )
     }

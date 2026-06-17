@@ -8,6 +8,11 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+data class TandoorImportRecord(
+    val tandoorId: Int,
+    val tandoorUpdatedAt: Long?,
+)
+
 @Dao
 abstract class RecipeDao {
 
@@ -58,4 +63,10 @@ abstract class RecipeDao {
     }
 
     @Delete abstract suspend fun delete(recipe: RecipeEntity)
+
+    @Query("UPDATE Recipe SET tandoorId = :tandoorId, tandoorUpdatedAt = :updatedAt WHERE id = :recipeId")
+    abstract suspend fun updateTandoorInfo(recipeId: Long, tandoorId: Int, updatedAt: Long?)
+
+    @Query("SELECT tandoorId, tandoorUpdatedAt FROM Recipe WHERE tandoorId IS NOT NULL")
+    abstract fun observeImportedTandoorRecipes(): Flow<List<TandoorImportRecord>>
 }

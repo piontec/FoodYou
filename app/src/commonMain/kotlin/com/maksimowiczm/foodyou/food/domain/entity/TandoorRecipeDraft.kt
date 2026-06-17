@@ -6,6 +6,8 @@ data class TandoorRecipeDraft(
     val servings: Int,
     val note: String?,
     val ingredients: List<TandoorIngredientDraft>,
+    /** Epoch seconds of the Tandoor recipe's last modification time. */
+    val updatedAt: Long? = null,
 )
 
 data class TandoorIngredientDraft(

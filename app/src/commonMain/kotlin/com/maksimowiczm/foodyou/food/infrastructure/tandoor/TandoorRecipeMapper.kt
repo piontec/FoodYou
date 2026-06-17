@@ -5,6 +5,7 @@ import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientDraft
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientProperty
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeDraft
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.model.TandoorRecipeDetailDto
+import kotlin.time.Instant
 
 internal object TandoorRecipeMapper {
 
@@ -14,6 +15,7 @@ internal object TandoorRecipeMapper {
             name = dto.name,
             servings = maxOf(1, dto.servings),
             note = buildNote(dto),
+            updatedAt = dto.updatedAt?.parseToEpochSecondsOrNull(),
             ingredients =
                 dto.steps.flatMap { step ->
                     step.ingredients.map { ingredient ->
@@ -61,3 +63,10 @@ internal object TandoorRecipeMapper {
         ).takeIf { it.isNotEmpty() }?.joinToString(separator = "\n\n")
     }
 }
+
+private fun String.parseToEpochSecondsOrNull(): Long? =
+    try {
+        Instant.parse(this).epochSeconds
+    } catch (_: IllegalArgumentException) {
+        null
+    }

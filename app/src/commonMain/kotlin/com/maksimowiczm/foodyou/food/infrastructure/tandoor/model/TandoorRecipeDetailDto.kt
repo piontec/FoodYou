@@ -20,6 +20,7 @@ internal data class TandoorRecipeDetailDto(
     val servings: Int = 1,
     @SerialName("servings_text") val servingsText: String? = null,
     @SerialName("source_url") val sourceUrl: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
     val steps: List<TandoorStepDto> = emptyList(),
 )
 

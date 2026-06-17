@@ -132,6 +132,23 @@ internal class RoomRecipeRepository(
 
         recipeDao.updateRecipeWithIngredients(recipeEntity, ingredients)
     }
+
+    override suspend fun setTandoorInfo(
+        recipeId: FoodId.Recipe,
+        tandoorId: Int,
+        tandoorUpdatedAt: Long?,
+    ) {
+        recipeDao.updateTandoorInfo(
+            recipeId = recipeId.id,
+            tandoorId = tandoorId,
+            updatedAt = tandoorUpdatedAt,
+        )
+    }
+
+    override fun observeImportedTandoorRecipes(): Flow<Map<Int, Long?>> =
+        recipeDao.observeImportedTandoorRecipes().map { records ->
+            records.associate { it.tandoorId to it.tandoorUpdatedAt }
+        }
 }
 
 private fun Recipe.toEntity(): RecipeEntity =

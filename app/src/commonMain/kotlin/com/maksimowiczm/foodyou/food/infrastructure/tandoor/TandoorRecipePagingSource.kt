@@ -4,6 +4,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeListItem
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.model.TandoorRecipeListItemDto
+import kotlin.time.Instant
 
 internal class TandoorRecipePagingSource(
     private val dataSource: TandoorRemoteDataSource,
@@ -38,4 +39,12 @@ private fun TandoorRecipeListItemDto.toDomain() =
         id = id,
         name = name,
         imageUrl = imageUrl,
+        updatedAt = updatedAt?.parseToEpochSecondsOrNull(),
     )
+
+private fun String.parseToEpochSecondsOrNull(): Long? =
+    try {
+        Instant.parse(this).epochSeconds
+    } catch (_: IllegalArgumentException) {
+        null
+    }

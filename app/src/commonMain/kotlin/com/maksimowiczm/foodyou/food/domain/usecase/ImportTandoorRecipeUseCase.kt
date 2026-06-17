@@ -14,6 +14,7 @@ import com.maksimowiczm.foodyou.food.domain.entity.FoodId
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientDraft
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeDraft
 import com.maksimowiczm.foodyou.food.domain.repository.ProductRepository
+import com.maksimowiczm.foodyou.food.domain.repository.RecipeRepository
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorIngredientResolution
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.autoResolve
 
@@ -34,6 +35,7 @@ internal sealed interface ImportTandoorRecipeError {
 internal class ImportTandoorRecipeUseCase(
     private val productRepository: ProductRepository,
     private val createRecipeUseCase: CreateRecipeUseCase,
+    private val recipeRepository: com.maksimowiczm.foodyou.food.domain.repository.RecipeRepository,
     private val transactionProvider: TransactionProvider,
     private val dateProvider: DateProvider,
 ) {
@@ -137,7 +139,14 @@ internal class ImportTandoorRecipeUseCase(
                             history = FoodHistory.Imported(dateProvider.nowInstant()),
                         )
                 ) {
-                    is Result.Success -> Ok(recipeResult.data)
+                    is Result.Success -> {
+                        recipeRepository.setTandoorInfo(
+                            recipeId = recipeResult.data,
+                            tandoorId = draft.id,
+                            tandoorUpdatedAt = draft.updatedAt,
+                        )
+                        Ok(recipeResult.data)
+                    }
                     is Result.Error -> {
                         val error = Err<FoodId.Recipe, ImportTandoorRecipeError>(
                             ImportTandoorRecipeError.CreateRecipeFailed(recipeResult.error),

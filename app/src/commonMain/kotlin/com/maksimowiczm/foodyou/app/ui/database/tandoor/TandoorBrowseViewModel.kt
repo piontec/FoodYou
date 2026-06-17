@@ -7,6 +7,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorRecipeListItem
+import com.maksimowiczm.foodyou.food.domain.repository.RecipeRepository
 import com.maksimowiczm.foodyou.food.domain.repository.TandoorCredentialsRepository
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorRecipePagingSource
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorRemoteDataSource
@@ -32,6 +33,7 @@ internal sealed interface TandoorBrowseState {
 
 internal class TandoorBrowseViewModel(
     private val credentialsRepository: TandoorCredentialsRepository,
+    private val recipeRepository: RecipeRepository,
     private val client: HttpClient,
 ) : ViewModel() {
     private val queryFlow = MutableStateFlow("")
@@ -54,6 +56,19 @@ internal class TandoorBrowseViewModel(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(2_000),
                 initialValue = TandoorBrowseState.Loading,
+            )
+
+    /**
+     * Maps Tandoor recipe ID → epoch seconds stored at import time (null if unknown).
+     * Only IDs of locally-imported recipes are included.
+     */
+    val importedTandoorRecipes: StateFlow<Map<Int, Long?>> =
+        recipeRepository
+            .observeImportedTandoorRecipes()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(2_000),
+                initialValue = emptyMap(),
             )
 
     @OptIn(FlowPreview::class)

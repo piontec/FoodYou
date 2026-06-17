@@ -320,6 +320,8 @@
     <string name="label_tandoor_resolved_empty">Empty product</string>
     <string name="action_tandoor_override">Override</string>
     <string name="label_tandoor_recipe_servings">Servings: %1$d</string>
+    <string name="label_tandoor_recipe_imported">Imported</string>
+    <string name="label_tandoor_recipe_updated_on_server">Updated on server — consider re-importing</string>
     <string name="label_gram" translatable="false">g</string>
     <string name="label_milliliter" translatable="false">ml</string>
 

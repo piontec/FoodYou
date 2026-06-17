@@ -8,4 +8,5 @@ internal data class TandoorRecipeListItemDto(
     val id: Int,
     val name: String,
     @SerialName("image") val imageUrl: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null,
 )

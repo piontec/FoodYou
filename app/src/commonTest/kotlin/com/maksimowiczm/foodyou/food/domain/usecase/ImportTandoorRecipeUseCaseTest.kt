@@ -57,6 +57,7 @@ class ImportTandoorRecipeUseCaseTest {
             ImportTandoorRecipeUseCase(
                 productRepository = productRepository,
                 createRecipeUseCase = createRecipeUseCase,
+                recipeRepository = recipeRepository,
                 transactionProvider = transactionProvider,
                 dateProvider = FakeDateProvider(Instant.parse("2026-06-16T12:34:56Z")),
             )
@@ -353,6 +354,7 @@ class ImportTandoorRecipeUseCaseTest {
             ImportTandoorRecipeUseCase(
                 productRepository = productRepository,
                 createRecipeUseCase = createRecipeUseCase,
+                recipeRepository = recipeRepository,
                 transactionProvider = transactionProvider,
                 dateProvider = FakeDateProvider(Instant.parse("2026-06-16T12:34:56Z")),
             )
@@ -396,6 +398,7 @@ class ImportTandoorRecipeUseCaseTest {
                 ImportTandoorRecipeUseCase(
                     productRepository = productRepository,
                     createRecipeUseCase = createRecipeUseCase,
+                    recipeRepository = recipeRepository,
                     transactionProvider = transactionProvider,
                     dateProvider = FakeDateProvider(Instant.parse("2026-06-16T12:34:56Z")),
                 ),
@@ -708,6 +711,16 @@ private class FakeRecipeRepository(
     override suspend fun updateRecipe(recipe: Recipe) = error("Not used in test")
 
     override suspend fun deleteRecipe(recipe: Recipe) = error("Not used in test")
+
+    override suspend fun setTandoorInfo(
+        recipeId: FoodId.Recipe,
+        tandoorId: Int,
+        tandoorUpdatedAt: Long?,
+    ) {
+        // no-op for tests
+    }
+
+    override fun observeImportedTandoorRecipes(): Flow<Map<Int, Long?>> = emptyFlow()
 
     override fun snapshot(): Any = insertedRecipes.toList()
 

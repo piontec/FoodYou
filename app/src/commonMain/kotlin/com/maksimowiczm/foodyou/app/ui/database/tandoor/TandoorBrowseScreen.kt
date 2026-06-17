@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -54,11 +56,13 @@ fun TandoorBrowseScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val recipes = viewModel.pagingData.collectAsLazyPagingItems()
+    val importedTandoorRecipes by viewModel.importedTandoorRecipes.collectAsStateWithLifecycle()
 
     TandoorBrowseScreen(
         query = query,
         state = state,
         recipes = recipes,
+        importedTandoorRecipes = importedTandoorRecipes,
         onBack = onBack,
         onQueryChange = viewModel::onQueryChange,
         onRetryCredentials = viewModel::reload,
@@ -73,6 +77,7 @@ internal fun TandoorBrowseScreen(
     query: String,
     state: TandoorBrowseState,
     recipes: LazyPagingItems<TandoorRecipeListItem>,
+    importedTandoorRecipes: Map<Int, Long?>,
     onBack: () -> Unit,
     onQueryChange: (String) -> Unit,
     onRetryCredentials: () -> Unit,
@@ -120,6 +125,7 @@ internal fun TandoorBrowseScreen(
                         RecipeResults(
                             query = query,
                             recipes = recipes,
+                            importedTandoorRecipes = importedTandoorRecipes,
                             onRetry = onRetryRecipes,
                             onRecipeSelected = onRecipeSelected,
                             modifier = Modifier.fillMaxSize(),
@@ -134,6 +140,7 @@ internal fun TandoorBrowseScreen(
 private fun RecipeResults(
     query: String,
     recipes: LazyPagingItems<TandoorRecipeListItem>,
+    importedTandoorRecipes: Map<Int, Long?>,
     onRetry: () -> Unit,
     onRecipeSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -193,8 +200,17 @@ private fun RecipeResults(
                     key = recipes.itemKey { it.id },
                 ) { index ->
                     recipes[index]?.let { recipe ->
+                        val importedUpdatedAt = importedTandoorRecipes[recipe.id]
+                        val isImported = recipe.id in importedTandoorRecipes
+                        val isUpdatedOnServer =
+                            isImported &&
+                                recipe.updatedAt != null &&
+                                importedUpdatedAt != null &&
+                                recipe.updatedAt > importedUpdatedAt
                         RecipeListItem(
                             recipe = recipe,
+                            isImported = isImported,
+                            isUpdatedOnServer = isUpdatedOnServer,
                             onClick = { onRecipeSelected(recipe.id) },
                             modifier = Modifier.fillMaxWidth(),
                         )
@@ -223,6 +239,8 @@ private fun RecipeResults(
 @Composable
 private fun RecipeListItem(
     recipe: TandoorRecipeListItem,
+    isImported: Boolean,
+    isUpdatedOnServer: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -260,6 +278,43 @@ private fun RecipeListItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (isUpdatedOnServer) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Update,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.tertiary,
+                        )
+                        Text(
+                            text = stringResource(Res.string.label_tandoor_recipe_updated_on_server),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
+                } else if (isImported) {
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary,
+                        )
+                        Text(
+                            text = stringResource(Res.string.label_tandoor_recipe_imported),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             }
         }
     }
