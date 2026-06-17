@@ -6,6 +6,7 @@ import com.maksimowiczm.foodyou.common.domain.measurement.Measurement
 import com.maksimowiczm.foodyou.food.domain.entity.FoodId
 import com.maksimowiczm.foodyou.food.domain.entity.Product
 import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientDraft
+import com.maksimowiczm.foodyou.food.domain.entity.TandoorIngredientProperty
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorFoodMatchRepository
 import com.maksimowiczm.foodyou.food.infrastructure.tandoor.TandoorIngredientResolution
 import kotlin.test.Test
@@ -87,7 +88,7 @@ class AutoLinkTandoorIngredientsUseCaseTest {
     }
 
     @Test
-    fun alreadyResolvedIngredientsAreUnchanged() = kotlinx.coroutines.runBlocking {
+    fun alreadyResolvedIngredientsWithPropertiesAreUnchanged() = kotlinx.coroutines.runBlocking {
         val useCase =
             AutoLinkTandoorIngredientsUseCase(
                 matchRepository =
@@ -100,13 +101,39 @@ class AutoLinkTandoorIngredientsUseCaseTest {
             )
         val resolved =
             TandoorIngredientResolution.CanAutoResolve(
-                ingredient = resolvedIngredient(foodName = "Garlic"),
+                ingredient = resolvedIngredient(foodName = "Garlic", withProperties = true),
                 measurement = Measurement.Gram(12.0),
             )
 
         val result = useCase.autoLink(listOf(resolved))
 
         assertEquals(listOf(resolved), result)
+    }
+
+    @Test
+    fun resolvedIngredientsWithoutPropertiesAreAutoLinked() = kotlinx.coroutines.runBlocking {
+        val useCase =
+            AutoLinkTandoorIngredientsUseCase(
+                matchRepository =
+                    FakeTandoorFoodMatchRepository(
+                        matches =
+                            mapOf(
+                                "garlic" to product(id = FoodId.Product(7L), name = "Garlic"),
+                            ),
+                    ),
+            )
+        val resolved =
+            TandoorIngredientResolution.CanAutoResolve(
+                ingredient = resolvedIngredient(foodName = "Garlic", withProperties = false),
+                measurement = Measurement.Gram(12.0),
+            )
+
+        val result = useCase.autoLink(listOf(resolved))
+
+        val linked = assertIs<TandoorIngredientResolution.AutoLinkedToFood>(result.single())
+        assertEquals(FoodId.Product(7L), linked.foodId)
+        assertEquals(Measurement.Gram(12.0), linked.measurement)
+        assertEquals("Garlic", linked.foodName)
     }
 
     @Test
@@ -153,13 +180,19 @@ class AutoLinkTandoorIngredientsUseCaseTest {
 
     private fun resolvedIngredient(
         foodName: String,
+        withProperties: Boolean = false,
     ) = TandoorIngredientDraft(
         tandoorFoodId = 2,
         foodName = foodName,
         amount = 12.0,
         unitName = "gram",
         unitBaseUnit = "g",
-        properties = emptyList(),
+        properties =
+            if (withProperties) {
+                listOf(TandoorIngredientProperty(openDataSlug = "energy", amount = 149.0))
+            } else {
+                emptyList()
+            },
         propertiesFoodAmount = 100.0,
         propertiesFoodBaseUnit = "g",
         conversions = emptyList(),
